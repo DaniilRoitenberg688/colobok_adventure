@@ -1,0 +1,9 @@
+WIDTH = 600
+
+CELL_SIZE = 75
+
+HEIGHT = 750
+
+GREY = (240, 240, 240)
+
+FPS = 60
