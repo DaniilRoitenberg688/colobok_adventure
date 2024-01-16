@@ -1,13 +1,13 @@
-import pygame
-
-from functions import *
+import pygame.sprite
 
 from constants import CELL_SIZE, HEIGHT, WIDTH
+from functions import *
+from groups import *
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, start_x, start_y):
-        super().__init__()
+    def __init__(self, start_x, start_y, ):
+        super().__init__(player_group)
 
         self.images = [load_image('full_red.png'), load_image('full_red_left.png'), load_image('full_red_down.png'),
                        load_image('full_red_right.png')]
@@ -17,34 +17,55 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
 
         self.rect.x = start_x + 5.5
+
         self.rect.y = start_y + 5.5
 
         self.x = start_x // 75
         self.y = start_y // 75
 
-
     def update(self, *args, **kwargs):
         event = args[0]
+        map = args[-1]
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            self.shot(self.images.index(self.image))
+
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
+                if map[self.y - 1][self.x] not in '01234567':
+                    self.y -= 1
                 self.image = self.images[0]
-                self.y -= 1
+
             if event.key == pygame.K_DOWN:
+                if map[self.y + 1][self.x] not in '01234567':
+                    self.y += 1
                 self.image = self.images[2]
-                self.y += 1
 
             if event.key == pygame.K_LEFT:
+                if map[self.y][self.x - 1] not in '01234567':
+                    self.x -= 1
                 self.image = self.images[1]
-                self.x -= 1
 
             if event.key == pygame.K_RIGHT:
+                if map[self.y][self.x + 1] not in '01234567':
+                    self.x += 1
                 self.image = self.images[3]
-                self.x += 1
+
+    def shot(self, number):
+        if number == 0:
+            patron = Patron(self.rect.x + 22, self.rect.y - 20, 0, -7)
+        if number == 1:
+            patron = Patron(self.rect.x + 20, self.rect.y + 22, -7, 0)
+        if number == 2:
+            patron = Patron(self.rect.x + 22, self.rect.y + 20, 0, 7)
+        if number == 3:
+            patron = Patron(self.rect.x + 20, self.rect.y + 22, 7, 0)
+        return patron
 
 
 class EmptyGround(pygame.sprite.Sprite):
     def __init__(self, x, y, number=1):
-        super().__init__()
+        super().__init__(all_sprites_group)
 
         self.image = load_image(f'floor_{number}.png')
 
@@ -55,20 +76,31 @@ class EmptyGround(pygame.sprite.Sprite):
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, x, y, number):
-        super().__init__()
-        if number == '0':
-            self.image = load_image('wall_0.png')
-        if number == '1':
-            self.image = load_image('wall_1.png')
-        if number == '2':
-            self.image = load_image('wall_2.png')
-        if number == '3':
-            self.image = load_image('wall_3.png')
+        super().__init__(walls_group, all_sprites_group)
+        self.image = load_image(f'wall_{number}.png')
 
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
 
+
+class Patron(pygame.sprite.Sprite):
+    def __init__(self, x, y, speed_x, speed_y):
+        super().__init__(patrons_group, all_sprites_group)
+
+        self.image = load_image('red_hands.png')
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.speed_x = speed_x
+        self.speed_y = speed_y
+
+    def update(self, *args, **kwargs):
+        if pygame.sprite.spritecollideany(self, walls_group):
+            self.speed_y = 0
+            self.speed_x = 0
+        self.rect.x += self.speed_x
+        self.rect.y += self.speed_y
 
 
 class Camera:
@@ -89,20 +121,19 @@ class Camera:
         self.y = new_y
 
 
-def generate_level(level, player_group: pygame.sprite.Group, main_group: pygame.sprite.Group):
+def generate_level(level):
     new_player = None
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '.':
                 continue
-            if level[y][x] in '01234':
-                main_group.add(Wall(x * CELL_SIZE, y * CELL_SIZE, level[y][x]))
+            if level[y][x] in '01234567':
+                Wall(x * CELL_SIZE, y * CELL_SIZE, level[y][x])
             elif level[y][x] == 's':
-                main_group.add(EmptyGround(x * CELL_SIZE, y * CELL_SIZE))
+                EmptyGround(x * CELL_SIZE, y * CELL_SIZE)
             elif level[y][x] == '@':
-                main_group.add(EmptyGround(x * CELL_SIZE, y * CELL_SIZE))
+                EmptyGround(x * CELL_SIZE, y * CELL_SIZE)
                 new_player = Player(x * CELL_SIZE, y * CELL_SIZE)
-                player_group.add(new_player)
     # вернем игрока, а также размер поля в клетках
     return new_player
 
