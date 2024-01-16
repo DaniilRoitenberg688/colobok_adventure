@@ -45,4 +45,5 @@ def zero_level():
 
 if __name__ == '__main__':
     zero_level()
+    print('test')
 
