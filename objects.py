@@ -1,6 +1,6 @@
 import pygame.sprite
 
-from constants import CELL_SIZE, HEIGHT, WIDTH
+from constants import CELL_SIZE, HEIGHT, WIDTH, GREY
 from functions import *
 from groups import *
 
@@ -31,31 +31,31 @@ class Player(pygame.sprite.Sprite):
             self.shot(self.images.index(self.image))
 
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP:
-                if map[self.y - 1][self.x] not in '01234567':
+            if event.key == pygame.K_UP or event.key == pygame.K_w:
+                if map[self.y - 1][self.x] not in '01234567b':
                     self.y -= 1
                 self.image = self.images[0]
 
-            if event.key == pygame.K_DOWN:
-                if map[self.y + 1][self.x] not in '01234567':
+            if event.key == pygame.K_DOWN or event.key == pygame.K_s:
+                if map[self.y + 1][self.x] not in '01234567b':
                     self.y += 1
                 self.image = self.images[2]
 
-            if event.key == pygame.K_LEFT:
-                if map[self.y][self.x - 1] not in '01234567':
+            if event.key == pygame.K_LEFT or event.key == pygame.K_a:
+                if map[self.y][self.x - 1] not in '01234567b':
                     self.x -= 1
                 self.image = self.images[1]
 
-            if event.key == pygame.K_RIGHT:
-                if map[self.y][self.x + 1] not in '01234567':
+            if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
+                if map[self.y][self.x + 1] not in '01234567b':
                     self.x += 1
                 self.image = self.images[3]
 
     def shot(self, number):
         if number == 0:
-            patron = Patron(self.rect.x + 22, self.rect.y - 20, 0, -7)
+            patron = Patron(self.rect.x + 22, self.rect.y + 5 , 0, -7)
         if number == 1:
-            patron = Patron(self.rect.x + 20, self.rect.y + 22, -7, 0)
+            patron = Patron(self.rect.x + 5, self.rect.y + 22, -7, 0)
         if number == 2:
             patron = Patron(self.rect.x + 22, self.rect.y + 20, 0, 7)
         if number == 3:
@@ -99,8 +99,38 @@ class Patron(pygame.sprite.Sprite):
         if pygame.sprite.spritecollideany(self, walls_group):
             self.speed_y = 0
             self.speed_x = 0
+        if pygame.sprite.spritecollideany(self, barrels_group):
+            self.kill()
         self.rect.x += self.speed_x
         self.rect.y += self.speed_y
+
+
+class Barrel(pygame.sprite.Sprite):
+    def __init__(self, x, y, map):
+        super().__init__(barrels_group, all_sprites_group)
+        self.image = load_image('barrel.png')
+
+        self.rect = self.image.get_rect()
+        self.x, self.y = x, y
+        self.rect.x, self.rect.y = x * CELL_SIZE, y * CELL_SIZE
+
+        self.map = map
+
+        self.hp = 50
+
+    def update(self, *args, **kwargs):
+        if self.hp <= 25:
+            self.image = load_image('barrel_25.png')
+
+        if self.hp <= 0:
+            self.map[self.y][self.x] = 's'
+            self.kill()
+
+        if pygame.sprite.spritecollideany(self, patrons_group):
+            self.hp -= 25
+
+
+
 
 
 class Camera:
@@ -127,6 +157,9 @@ def generate_level(level):
         for x in range(len(level[y])):
             if level[y][x] == '.':
                 continue
+            if level[y][x] == 'b':
+                EmptyGround(x * CELL_SIZE, y * CELL_SIZE)
+                Barrel(x, y, level)
             if level[y][x] in '01234567':
                 Wall(x * CELL_SIZE, y * CELL_SIZE, level[y][x])
             elif level[y][x] == 's':
@@ -142,5 +175,26 @@ def load_level(filename):
     filename = "data/" + filename
     # читаем уровень, убирая символы перевода строки
     with open(filename, 'r') as mapFile:
-        level_map = [line.strip() for line in mapFile]
+        level_map = [list(line.strip()) for line in mapFile]
     return level_map
+
+
+def pause_menu(screen, x, y):
+    pygame.init()
+    font = pygame.font.Font('data/minecraft-ten-font-cyrillic.ttf', 70)
+    text = font.render("PAUSE", True, GREY)
+    pygame.draw.rect(screen, (255, 255, 255), (x, y, 400, 400))
+    screen.blit(text, (x + 65, y + 20))
+    pygame.draw.rect(screen, GREY, (x + 30, y + 195, 150, 150))
+    pygame.draw.polygon(screen, (255, 255, 255), ((x + 60, y + 225), (x + 60, y + 320), (x + 150, y + 275)))
+    font = pygame.font.Font('data/minecraft-ten-font-cyrillic.ttf', 40)
+    text = font.render("EXIT", True, (255, 255, 255))
+    pygame.draw.rect(screen, GREY, (x + 225, y + 195, 150, 150))
+    screen.blit(text, (x + 250, y + 235))
+    pygame.display.flip()
+
+
+if __name__ == '__main__':
+    pause_menu()
+
+

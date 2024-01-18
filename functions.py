@@ -3,6 +3,8 @@ import sys
 
 import pygame
 
+from groups import all_groups
+
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
@@ -21,3 +23,12 @@ def load_image(name, colorkey=None):
     else:
         image = image.convert_alpha()
     return image
+
+
+def clear_groups():
+    for group in all_groups:
+        for item in group:
+            item.kill()
+
+
+
