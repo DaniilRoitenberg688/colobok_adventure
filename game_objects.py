@@ -1,7 +1,7 @@
 import pygame.sprite
 
 from constants import CELL_SIZE, HEIGHT, WIDTH
-from functions import *
+from functions import load_image
 from groups import *
 
 
@@ -44,7 +44,7 @@ class Player(pygame.sprite.Sprite):
         # далее следует проверка на то в какую сторону нам идти и вообще можем ли мы это сделать
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP or event.key == pygame.K_w:
-                if map[self.y - 1][self.x] not in '01234567b':
+                if map[self.y - 1][self.x] not in '01234567bq':
                     self.y -= 1
                 self.image = self.images[0]
 
@@ -202,18 +202,97 @@ class Particles(pygame.sprite.Sprite):
         self.rect.y += self.dy
 
 
+class Sword(pygame.sprite.Sprite):
+    def __init__(self, start_x, start_y, dx, dy):
+        super().__init__(enemies_group, all_sprites_group)
+
+        if dx > 0:
+            self.image = load_image('sword_0.png')
+            self.rect = self.image.get_rect()
+            self.rect.x = start_x
+            self.start_x = start_x - 40
+            self.end_x = start_x + 70
+            self.fast_dx = dx
+            self.slow_dx = -1
+            self.dx = self.fast_dx
+
+            self.rect.y = start_y + 25
+            self.end_y = start_y
+            self.start_y = start_y
+
+        if dx < 0:
+
+            self.image = load_image('sword_2.png')
+            self.rect = self.image.get_rect()
+            self.rect.x = start_x + 30
+            self.start_x = start_x + 60
+            self.end_x = start_x - 50
+            self.fast_dx = dx
+            self.slow_dx = 1
+            self.dx = self.fast_dx
+
+            self.end_y = start_y
+            self.start_y = start_y
+            self.rect.y = start_y + 25
+
+    def update(self, *args, **kwargs):
+        if self.dx:
+            if abs(self.rect.x - self.end_x) < 15:
+                self.dx = self.slow_dx
+            if abs(self.rect.x - self.start_x) < 15:
+                self.dx = self.fast_dx
+
+        self.rect.x += self.dx
+
+
+class Pacman(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(pacman_group, enemies_group, all_sprites_group)
+        self.images = [load_image('pacman_openned.png'), load_image('pacman_closed.png')]
+        self.current = 0
+        self.image = self.images[self.current]
+        self.rect = self.image.get_rect()
+        self.rect.x = 0
+        self.rect.y = 800
+
+        self.time = 0
+
+    def update(self, *args, **kwargs):
+        self.rect.y += -1
+        if pygame.sprite.spritecollideany(self, player_group):
+            self.image = self.images[1]
+            self.rect.y -= 20
+
+
+
 class Camera:
+    """Класс камеры"""
     def __init__(self, x, y):
+        # первичный сдвиг и установка координат игрока
         self.x_shift = WIDTH // 2 - x - 37
         self.y_shift = HEIGHT // 2 - y
+        self.shift_for_pacman = 0
         self.x = x
         self.y = y
 
     def update(self, object):
+        """Смещение всех объектов"""
+        if type(object) == Sword:
+            object.end_x += self.x_shift
+            object.start_x += self.x_shift
+            object.end_y += self.y_shift
+            object.start_y += self.y_shift
+
+        if type(object) == Pacman:
+            object.rect.y += self.y_shift // 2
+            object.rect.x += -self.x_shift
+
         object.rect.x += self.x_shift
         object.rect.y += self.y_shift
 
+
     def change(self, new_x, new_y):
+        """Изменение сдвига относительно движения игрока"""
         self.x_shift = self.x - new_x
         self.x = new_x
         self.y_shift = self.y - new_y
@@ -229,6 +308,11 @@ def generate_level(level):
             if level[y][x] == 'b':
                 EmptyGround(x * CELL_SIZE, y * CELL_SIZE)
                 Barrel(x, y, level)
+
+            if level[y][x] == 'q':
+                Sword(x * CELL_SIZE, y * CELL_SIZE, 2, 0)
+            if level[y][x] == 'e':
+                Sword(x * CELL_SIZE, y * CELL_SIZE, -2, 0)
             # создание стены
             if level[y][x] in '01234567':
                 Wall(x * CELL_SIZE, y * CELL_SIZE, level[y][x])

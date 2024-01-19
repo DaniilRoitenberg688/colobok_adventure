@@ -1,5 +1,5 @@
 from constants import *
-from functions import *
+from functions import load_level, clear_groups, pause_menu
 from game_objects import *
 
 
@@ -14,15 +14,15 @@ def zero_level():
     clock = pygame.time.Clock()
 
     # загрузка уровня
-    map = load_level('map0.txt')
+    level = load_level('map0.txt')
 
     # отображение уровня
-    player = generate_level(map)
+    player = generate_level(level)
 
     # создание камеры и настройка уровня
     camera = Camera(player.rect.x, player.rect.y)
-    for object in all_sprites_group:
-        camera.update(object)
+    for sprite in all_sprites_group:
+        camera.update(sprite)
     camera.update(player)
 
     # флаг паузы
@@ -35,6 +35,8 @@ def zero_level():
     animation_is_running = False
 
     time = 0
+
+    Pacman()
 
     while running:
         # закрашиваем в серый
@@ -71,11 +73,11 @@ def zero_level():
 
             # если нет паузы обновляем игрока и камеру(это сделано для того чтобы во время паузы игрок не бегал
             if not is_pause:
-                player_group.update(event, map)
+                player_group.update(event, level)
 
                 camera.change(player.x * CELL_SIZE + 5.5, player.y * CELL_SIZE + 5.5)
-                for object in all_sprites_group:
-                    camera.update(object)
+                for sprite in all_sprites_group:
+                    camera.update(sprite)
 
         # проверка на то жив ли наш персонаж
         if pygame.sprite.spritecollideany(player, enemies_group):
@@ -89,13 +91,15 @@ def zero_level():
 
         # если нет паузы и анимации смерти, то обновляем и рисуем всех спрайтов
         if not is_pause and not animation_is_running:
-            enemies_group.update()
             all_sprites_group.update()
             particles_group.update()
             all_sprites_group.draw(screen)
-            enemies_group.draw(screen)
+            pacman_group.update()
             player_group.draw(screen)
+            enemies_group.draw(screen)
+            pacman_group.draw(screen)
             particles_group.draw(screen)
+
 
         # если идет анимация смерти, то рисуем всех спрайтов и обновляем только частицы
         if animation_is_running:
