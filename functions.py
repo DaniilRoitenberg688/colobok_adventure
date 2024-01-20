@@ -73,3 +73,32 @@ def pause_menu(screen, x, y):
 
     # обновление экрана
     pygame.display.flip()
+
+
+def win_window(screen, x, y, time):
+    pygame.init()
+    font = pygame.font.Font('data/minecraft-ten-font-cyrillic.ttf', 70)
+    text = font.render("YOU WIN", True, GREY)
+
+    star = load_image('star.png', -1)
+
+    pygame.transform.scale(star, (100, 100))
+
+    # отрисовка основного окошка
+    pygame.draw.rect(screen, (255, 255, 255), (x, y, 400, 400))
+
+    screen.blit(text, (x + 20, y + 20))
+
+    if time <= 25:
+        screen.blit(star, (x + 15, y + 160))
+        screen.blit(star, (x + 145, y + 160))
+        screen.blit(star, (x + 270, y + 160))
+    if 25 < time < 40:
+        screen.blit(star, (x + 15, y + 160))
+        screen.blit(star, (x + 145, y + 160))
+    if time >= 40:
+        screen.blit(star, (x + 15, y + 160))
+
+    font = pygame.font.Font('data/minecraft-ten-font-cyrillic.ttf', 26)
+    text = font.render("PRESS ANY KEY TO EXIT", True, (188, 188, 188))
+    screen.blit(text, (x + 10, y + 310))

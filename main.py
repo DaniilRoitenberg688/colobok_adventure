@@ -1,10 +1,9 @@
 import pygame
 
+from constants import WIDTH, HEIGHT, GREY
+from functions import load_image
 from level_menu import level_menu
 
-from constants import WIDTH, HEIGHT, GREY, BACKGROUND_GREY
-
-from functions import load_image
 
 def main():
     pygame.init()
@@ -21,7 +20,6 @@ def main():
     font_for_escape = pygame.font.Font('data/minecraft-ten-font-cyrillic.ttf', 20)
     first_text = font_for_space.render('Press SPACE to start', True, GREY)
     second_text = font_for_escape.render('ESCAPE to exit', True, (188, 188, 188))
-
 
     while running:
         screen.fill((255, 255, 255))

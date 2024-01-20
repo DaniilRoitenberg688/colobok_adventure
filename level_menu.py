@@ -1,8 +1,8 @@
 import pygame
 
+from constants import WIDTH, HEIGHT, main_exit, GREY, BACKGROUND_GREY
 from zero_level import zero_level
 
-from constants import WIDTH, HEIGHT, main_exit, GREY, BACKGROUND_GREY
 
 def level_menu():
     pygame.init()
@@ -21,7 +21,6 @@ def level_menu():
     text_second = second_font.render('2', True, BACKGROUND_GREY)
     level_text = third_font.render('level', True, BACKGROUND_GREY)
     exit_text = exit_font.render("EXIT", True, BACKGROUND_GREY)
-
 
     while running:
         screen.fill((255, 255, 255))
@@ -52,7 +51,6 @@ def level_menu():
         screen.blit(exit_text, (383, 520))
 
         screen.blit(text, (140, 20))
-
 
         pygame.display.flip()
 

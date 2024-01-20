@@ -1,10 +1,13 @@
+import time
+
 from constants import *
-from functions import load_level, clear_groups, pause_menu
+from functions import load_level, clear_groups, pause_menu, win_window
 from game_objects import *
 
 
 def zero_level():
     """Функция для запуска обучения"""
+    now_time = time.time()
 
     # создание и настройка экрана
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -34,7 +37,9 @@ def zero_level():
     # идет ли анимация смерти
     animation_is_running = False
 
-    time = 0
+    win_or_not = False
+
+    animation_time = 0
 
     Pacman()
 
@@ -47,6 +52,10 @@ def zero_level():
             # выходим
             if event.type == pygame.QUIT:
                 running = False
+
+            if win_or_not:
+                if event.type == pygame.KEYDOWN:
+                    running = False
 
             # если нажата клавиша ESCAPE запускаем паузу
             if event.type == pygame.KEYDOWN:
@@ -71,7 +80,7 @@ def zero_level():
                             running = False
                             clear_groups()
 
-            # если нет паузы обновляем игрока и камеру(это сделано для того чтобы во время паузы игрок не бегал
+            # если нет паузы обновляем игрока и камеру(это сделано для того чтобы во время паузы игрок не бегал)
             if not is_pause:
                 player_group.update(event, level)
 
@@ -83,6 +92,11 @@ def zero_level():
         if pygame.sprite.spritecollideany(player, enemies_group):
             alive_or_not = False
 
+        if pygame.sprite.spritecollideany(player, win_place_group):
+            win_or_not = True
+            finish_time = time.time() - now_time
+            clear_groups()
+
         # если персонаж умер, то запускаем анимацию смерти
         if not alive_or_not:
             if not animation_is_running:
@@ -90,7 +104,7 @@ def zero_level():
             animation_is_running = True
 
         # если нет паузы и анимации смерти, то обновляем и рисуем всех спрайтов
-        if not is_pause and not animation_is_running:
+        if not is_pause and not animation_is_running and not win_or_not:
             all_sprites_group.update()
             particles_group.update()
             all_sprites_group.draw(screen)
@@ -100,11 +114,10 @@ def zero_level():
             pacman_group.draw(screen)
             particles_group.draw(screen)
 
-
         # если идет анимация смерти, то рисуем всех спрайтов и обновляем только частицы
         if animation_is_running:
             # это счет чик времени, чтобы анимация сразу не исчезла
-            if time >= 40:
+            if animation_time >= 40:
                 clear_groups()
                 return
             screen.fill(BACKGROUND_GREY)
@@ -113,11 +126,14 @@ def zero_level():
             enemies_group.draw(screen)
             particles_group.draw(screen)
 
-            time += 1
+            animation_time += 1
 
         # если пауза рисуем меню паузы
         if is_pause:
             pause_menu(screen, 100, 100)
+
+        if win_or_not:
+            win_window(screen, 100, 100, finish_time)
 
         pygame.display.flip()
         clock.tick(FPS)

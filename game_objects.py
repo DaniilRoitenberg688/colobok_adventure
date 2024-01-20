@@ -1,3 +1,5 @@
+from random import randint
+
 import pygame.sprite
 
 from constants import CELL_SIZE, HEIGHT, WIDTH
@@ -7,6 +9,7 @@ from groups import *
 
 class Player(pygame.sprite.Sprite):
     """Класс игрока"""
+
     def __init__(self, start_x, start_y, ):
         super().__init__(player_group)
         # список изображений повернутого спрайта
@@ -162,6 +165,7 @@ class Barrel(pygame.sprite.Sprite):
 
 class Enemy(pygame.sprite.Sprite):
     """Класс врага"""
+
     def __init__(self, x, y, speed):
         super().__init__(enemies_group, all_sprites_group)
 
@@ -190,6 +194,7 @@ class Enemy(pygame.sprite.Sprite):
 
 class Particles(pygame.sprite.Sprite):
     """Класс частиц(сделан для анимации смерти игрока)"""
+
     def __init__(self, x, y, dx, dy):
         super().__init__(particles_group)
         self.image = load_image('red_hands.png')
@@ -221,7 +226,6 @@ class Sword(pygame.sprite.Sprite):
             self.start_y = start_y
 
         if dx < 0:
-
             self.image = load_image('sword_2.png')
             self.rect = self.image.get_rect()
             self.rect.x = start_x + 30
@@ -264,9 +268,86 @@ class Pacman(pygame.sprite.Sprite):
             self.rect.y -= 20
 
 
+class Bow(pygame.sprite.Sprite):
+    def __init__(self, x, y, direction):
+        super().__init__(all_sprites_group)
+
+        if direction == 0:
+            self.arrow_speed = (5, 0)
+        if direction == 1:
+            self.arrow_speed = (0, 5)
+        if direction == 2:
+            self.arrow_speed = (-5, 0)
+        if direction == 3:
+            self.arrow_speed = (0, -5)
+
+        self.images = [load_image(f'bow_{direction}.png'), load_image(f'bow_with_arrow_{direction}.png')]
+
+        self.current = 0
+
+        self.image = self.images[self.current]
+
+        self.rect = self.image.get_rect()
+        self.rect.x = x + 10
+        self.rect.y = y
+
+        self.time = 0
+
+        self.how_long_wait = randint(40, 70)
+
+    def update(self, *args, **kwargs):
+        if self.time == self.how_long_wait:
+            if self.current == 0:
+                self.current = 1
+            else:
+                Arrow(self.rect.x, self.rect.y, self.arrow_speed[0], self.arrow_speed[1])
+                self.current = 0
+            self.time = 0
+
+        self.time += 1
+
+        self.image = self.images[self.current]
+
+
+class Arrow(pygame.sprite.Sprite):
+    def __init__(self, x, y, dx, dy):
+        super().__init__(enemies_group, all_sprites_group)
+        if dx:
+            if dx > 0:
+                self.image = load_image('arrow_0.png')
+            if dx < 0:
+                self.image = load_image('arrow_2.png')
+        if dy:
+            if dy > 0:
+                self.image = load_image('arrow_1.png')
+            if dy < 0:
+                self.image = load_image('arrow_3.png')
+
+        self.rect = self.image.get_rect()
+        self.rect.x = x + dx * 4 + 20
+        self.rect.y = y + dy * 4 + 20
+        self.dx = dx
+        self.dy = dy
+
+    def update(self, *args, **kwargs):
+        if pygame.sprite.spritecollideany(self, walls_group):
+            self.kill()
+        self.rect.x += self.dx
+        self.rect.y += self.dy
+
+
+class WinPlace(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__(all_sprites_group, win_place_group)
+        self.image = load_image('win_place.png')
+        self.rect = self.image.get_rect()
+        self.rect.x = x + 10
+        self.rect.y = y + 10
+
 
 class Camera:
     """Класс камеры"""
+
     def __init__(self, x, y):
         # первичный сдвиг и установка координат игрока
         self.x_shift = WIDTH // 2 - x - 37
@@ -290,7 +371,6 @@ class Camera:
         object.rect.x += self.x_shift
         object.rect.y += self.y_shift
 
-
     def change(self, new_x, new_y):
         """Изменение сдвига относительно движения игрока"""
         self.x_shift = self.x - new_x
@@ -308,6 +388,19 @@ def generate_level(level):
             if level[y][x] == 'b':
                 EmptyGround(x * CELL_SIZE, y * CELL_SIZE)
                 Barrel(x, y, level)
+
+            if level[y][x] == '!':
+                EmptyGround(x * CELL_SIZE, y * CELL_SIZE)
+                WinPlace(x * CELL_SIZE, y * CELL_SIZE)
+
+            if level[y][x] == 't':
+                Bow(x * CELL_SIZE, y * CELL_SIZE, 0)
+            if level[y][x] == 'y':
+                Bow(x * CELL_SIZE, y * CELL_SIZE, 1)
+            if level[y][x] == 'u':
+                Bow(x * CELL_SIZE, y * CELL_SIZE, 2)
+            if level[y][x] == 'i':
+                Bow(x * CELL_SIZE, y * CELL_SIZE, 3)
 
             if level[y][x] == 'q':
                 Sword(x * CELL_SIZE, y * CELL_SIZE, 2, 0)
