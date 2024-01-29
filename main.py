@@ -13,8 +13,8 @@ def main():
 
     image = load_image('fon.png')
 
-    font_for_name = pygame.font.Font('data/minecraft-ten-font-cyrillic.ttf', 45)
-    name_of_game = font_for_name.render('GAME ABOUT CIRCLE', True, (179, 40, 33))
+    font_for_name = pygame.font.Font('data/minecraft-ten-font-cyrillic.ttf', 43)
+    name_of_game = font_for_name.render('COLOBOK ADVENTURE', True, (179, 40, 33))
 
     font_for_space = pygame.font.Font('data/minecraft-ten-font-cyrillic.ttf', 35)
     font_for_escape = pygame.font.Font('data/minecraft-ten-font-cyrillic.ttf', 20)

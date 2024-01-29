@@ -5,7 +5,7 @@ from functions import load_level, clear_groups, pause_menu, win_window
 from game_objects import *
 
 
-def zero_level():
+def first_level():
     """Функция для запуска обучения"""
     now_time = time.time()
 
@@ -17,7 +17,7 @@ def zero_level():
     clock = pygame.time.Clock()
 
     # загрузка уровня
-    level = load_level('map0.txt')
+    level = load_level('map1.txt')
 
     # отображение уровня
     player = generate_level(level)
@@ -41,7 +41,7 @@ def zero_level():
 
     animation_time = 0
 
-    Pacman(1)
+    Pacman(2)
 
     while running:
         # закрашиваем в серый
@@ -133,11 +133,11 @@ def zero_level():
             pause_menu(screen, 100, 100)
 
         if win_or_not:
-            win_window(screen, 100, 100, finish_time - 10)
+            win_window(screen, 100, 100, finish_time)
 
         pygame.display.flip()
         clock.tick(FPS)
 
 
 if __name__ == '__main__':
-    zero_level()
+    first_level()

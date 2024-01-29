@@ -1,6 +1,7 @@
 import pygame
 
 from constants import WIDTH, HEIGHT, main_exit, GREY, BACKGROUND_GREY
+from first_level import first_level
 from zero_level import zero_level
 
 
@@ -32,6 +33,9 @@ def level_menu():
                 y = event.pos[1]
                 if 30 < x < 230 and 170 < y < 370:
                     zero_level()
+                if 350 < x < 550 and 17 < y < 370:
+                    first_level()
+
                 if 350 < x < 550 and 470 < y < 670:
                     running = False
 

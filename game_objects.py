@@ -299,7 +299,7 @@ class Sword(pygame.sprite.Sprite):
 
 
 class Pacman(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, number):
         super().__init__(pacman_group, enemies_group, all_sprites_group)
         self.images = [load_image('pacman_openned.png'), load_image('pacman_closed.png')]
         self.current = 0
@@ -307,6 +307,7 @@ class Pacman(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = 0
         self.rect.y = 800
+        self.number = number
 
         self.time = 0
 
@@ -319,7 +320,7 @@ class Pacman(pygame.sprite.Sprite):
 
 class Bow(pygame.sprite.Sprite):
     def __init__(self, x, y, direction):
-        super().__init__(all_sprites_group)
+        super().__init__(enemies_group, all_sprites_group)
 
         if direction == 0:
             self.arrow_speed = (5, 0)
@@ -379,7 +380,7 @@ class Arrow(pygame.sprite.Sprite):
         self.dy = dy
 
     def update(self, *args, **kwargs):
-        if pygame.sprite.spritecollideany(self, walls_group):
+        if pygame.sprite.spritecollideany(self, walls_group) or pygame.sprite.spritecollideany(self, barrels_group):
             self.kill()
         self.rect.x += self.dx
         self.rect.y += self.dy
@@ -414,7 +415,7 @@ class Camera:
             object.start_y += self.y_shift
 
         if type(object) == Pacman:
-            object.rect.y += self.y_shift // 2
+            object.rect.y += self.y_shift * object.number
             object.rect.x += -self.x_shift
 
         object.rect.x += self.x_shift
