@@ -125,7 +125,7 @@ class Patron(pygame.sprite.Sprite):
             self.speed_y = 0
             self.speed_x = 0
         # если касаемся бочки, то исчезаем
-        if pygame.sprite.spritecollideany(self, barrels_group):
+        if pygame.sprite.spritecollideany(self, barrels_group) or pygame.sprite.spritecollideany(self, enemies_group):
             self.kill()
         # изменение положения объекта
         self.rect.x += self.speed_x
@@ -211,42 +211,91 @@ class Sword(pygame.sprite.Sprite):
     def __init__(self, start_x, start_y, dx, dy):
         super().__init__(enemies_group, all_sprites_group)
 
-        if dx > 0:
-            self.image = load_image('sword_0.png')
-            self.rect = self.image.get_rect()
-            self.rect.x = start_x
-            self.start_x = start_x - 40
-            self.end_x = start_x + 70
-            self.fast_dx = dx
-            self.slow_dx = -1
-            self.dx = self.fast_dx
+        if dx:
+            if dx > 0:
+                self.image = load_image('sword_0.png')
+                self.rect = self.image.get_rect()
+                self.rect.x = start_x + 20
+                self.rect.y = start_y + 25
 
-            self.rect.y = start_y + 25
-            self.end_y = start_y
-            self.start_y = start_y
+                self.start_x = start_x - 15
+                self.start_y = start_y
 
-        if dx < 0:
-            self.image = load_image('sword_2.png')
-            self.rect = self.image.get_rect()
-            self.rect.x = start_x + 30
-            self.start_x = start_x + 60
-            self.end_x = start_x - 50
-            self.fast_dx = dx
-            self.slow_dx = 1
-            self.dx = self.fast_dx
+                self.end_x = start_x + 55
+                self.end_y = start_y
 
-            self.end_y = start_y
-            self.start_y = start_y
-            self.rect.y = start_y + 25
+                self.dx = dx
+                self.dy = 0
+                self.fast_dx = dx
+                self.slow_dx = -1
+
+            if dx < 0:
+                self.image = load_image('sword_2.png')
+                self.rect = self.image.get_rect()
+                self.rect.x = start_x
+                self.rect.y = start_y + 25
+
+                self.start_x = start_x + 35
+                self.start_y = start_y
+
+                self.end_x = start_x - 35
+                self.end_y = start_y
+
+                self.dx = dx
+                self.dy = 0
+                self.fast_dx = dx
+                self.slow_dx = 1
+
+        if dy:
+            if dy > 0:
+                self.image = load_image('sword_1.png')
+                self.rect = self.image.get_rect()
+                self.rect.y = start_y + 20
+                self.rect.x = start_x + 25
+
+                self.start_x = start_x
+                self.start_y = start_y - 15
+
+                self.end_x = start_x
+                self.end_y = start_y + 55
+
+                self.dx = 0
+                self.dy = dy
+                self.fast_dy = dy
+                self.slow_dy = -1
+
+            if dy < 0:
+                self.image = load_image('sword_3.png')
+                self.rect = self.image.get_rect()
+                self.rect.y = start_y
+                self.rect.x = start_x + 25
+
+                self.start_x = start_x
+                self.start_y = start_y + 35
+
+                self.end_x = start_x
+                self.end_y = start_y - 35
+
+                self.dx = 0
+                self.dy = dy
+                self.fast_dy = dy
+                self.slow_dy = 1
 
     def update(self, *args, **kwargs):
         if self.dx:
-            if abs(self.rect.x - self.end_x) < 15:
+            if abs(self.rect.x - self.end_x) <= 1:
                 self.dx = self.slow_dx
-            if abs(self.rect.x - self.start_x) < 15:
+            if abs(self.rect.x - self.start_x) <= 1:
                 self.dx = self.fast_dx
 
-        self.rect.x += self.dx
+            self.rect.x += self.dx
+
+        if self.dy:
+            if abs(self.rect.y - self.end_y) <= 1:
+                self.dy = self.slow_dy
+            if abs(self.rect.y - self.start_y) <= 1:
+                self.dy = self.fast_dy
+            self.rect.y += self.dy
 
 
 class Pacman(pygame.sprite.Sprite):
@@ -288,7 +337,7 @@ class Bow(pygame.sprite.Sprite):
         self.image = self.images[self.current]
 
         self.rect = self.image.get_rect()
-        self.rect.x = x + 10
+        self.rect.x = x + 5
         self.rect.y = y
 
         self.time = 0
@@ -406,6 +455,11 @@ def generate_level(level):
                 Sword(x * CELL_SIZE, y * CELL_SIZE, 2, 0)
             if level[y][x] == 'e':
                 Sword(x * CELL_SIZE, y * CELL_SIZE, -2, 0)
+            if level[y][x] == 'w':
+                Sword(x * CELL_SIZE, y * CELL_SIZE, 0, 2)
+            if level[y][x] == 'r':
+                Sword(x * CELL_SIZE, y * CELL_SIZE, 0, -2)
+
             # создание стены
             if level[y][x] in '01234567':
                 Wall(x * CELL_SIZE, y * CELL_SIZE, level[y][x])

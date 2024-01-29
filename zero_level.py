@@ -41,7 +41,7 @@ def zero_level():
 
     animation_time = 0
 
-    Pacman()
+    # Pacman()
 
     while running:
         # закрашиваем в серый
