@@ -102,3 +102,10 @@ def win_window(screen, x, y, time):
     font = pygame.font.Font('data/minecraft-ten-font-cyrillic.ttf', 26)
     text = font.render("PRESS ANY KEY TO EXIT", True, (188, 188, 188))
     screen.blit(text, (x + 10, y + 310))
+
+
+def draw_pacman_hp(screen, num):
+    pygame.draw.rect(screen, (0, 0, 0), (30, 20, 20 * 27, 30))
+    pygame.draw.rect(screen, (0, 255, 0), (30, 20, num * 27, 30))
+
+

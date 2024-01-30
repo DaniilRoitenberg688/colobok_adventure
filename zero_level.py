@@ -20,7 +20,7 @@ def zero_level():
     level = load_level('map0.txt')
 
     # отображение уровня
-    player = generate_level(level)
+    player, _ = generate_level(level)
 
     # создание камеры и настройка уровня
     camera = Camera(player.rect.x, player.rect.y)
@@ -41,7 +41,7 @@ def zero_level():
 
     animation_time = 0
 
-    Pacman(1)
+    FollowingPacman(0.5)
 
     while running:
         # закрашиваем в серый
@@ -51,6 +51,7 @@ def zero_level():
         for event in pygame.event.get():
             # выходим
             if event.type == pygame.QUIT:
+                clear_groups()
                 running = False
 
             if win_or_not:
@@ -82,7 +83,7 @@ def zero_level():
 
             # если нет паузы обновляем игрока и камеру(это сделано для того чтобы во время паузы игрок не бегал)
             if not is_pause:
-                player_group.update(event, level)
+                player_group.update(event, level, False)
 
                 camera.change(player.x * CELL_SIZE + 5.5, player.y * CELL_SIZE + 5.5)
                 for sprite in all_sprites_group:
@@ -94,13 +95,19 @@ def zero_level():
 
         if pygame.sprite.spritecollideany(player, win_place_group):
             win_or_not = True
+            pygame.mixer.music.load('data/si.mp3')
+            pygame.mixer.music.set_volume(0.5)
+            pygame.mixer.music.play(1)
             finish_time = time.time() - now_time
             clear_groups()
 
         # если персонаж умер, то запускаем анимацию смерти
         if not alive_or_not:
             if not animation_is_running:
-                die_of_hero(player.rect.x, player.rect.y)
+                die_of_hero(player.rect.x, player.rect.y, 1)
+                pygame.mixer.music.load('data/player_die.mp3')
+                pygame.mixer.music.set_volume(0.5)
+                pygame.mixer.music.play(1)
             animation_is_running = True
 
         # если нет паузы и анимации смерти, то обновляем и рисуем всех спрайтов

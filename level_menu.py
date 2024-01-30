@@ -1,7 +1,8 @@
 import pygame
 
-from constants import WIDTH, HEIGHT, main_exit, GREY, BACKGROUND_GREY
+from constants import WIDTH, HEIGHT, GREY, BACKGROUND_GREY
 from first_level import first_level
+from second_level import second_level
 from zero_level import zero_level
 
 
@@ -27,14 +28,17 @@ def level_menu():
         screen.fill((255, 255, 255))
         for event in pygame.event.get():
             if pygame.QUIT == event.type:
-                main_exit()
+                running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 x = event.pos[0]
                 y = event.pos[1]
-                if 30 < x < 230 and 170 < y < 370:
+                if 45 < x < 245 and 170 < y < 370:
                     zero_level()
                 if 350 < x < 550 and 17 < y < 370:
                     first_level()
+
+                if 45 < x < 245 and 470 < y < 670:
+                    second_level()
 
                 if 350 < x < 550 and 470 < y < 670:
                     running = False
@@ -57,6 +61,8 @@ def level_menu():
         screen.blit(text, (140, 20))
 
         pygame.display.flip()
+
+    pygame.mixer.music.stop()
 
 
 if __name__ == '__main__':

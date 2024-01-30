@@ -34,7 +34,8 @@ class Player(pygame.sprite.Sprite):
         """Обновление персонажа"""
         # получаем событие и карту нашего уровня для дальнейшей проверки
         event = args[0]
-        map = args[-1]
+        map = args[1]
+        move_or_not = args[-1]
 
         # проверяем касается ли наш персонаж врагов
         if pygame.sprite.spritecollideany(self, enemies_group):
@@ -49,25 +50,36 @@ class Player(pygame.sprite.Sprite):
             if event.key == pygame.K_UP or event.key == pygame.K_w:
                 if map[self.y - 1][self.x] not in '01234567bq':
                     self.y -= 1
+                    if move_or_not:
+                        self.rect.y -= 75
                 self.image = self.images[0]
 
             if event.key == pygame.K_DOWN or event.key == pygame.K_s:
                 if map[self.y + 1][self.x] not in '01234567b':
                     self.y += 1
+                    if move_or_not:
+                        self.rect.y += 75
                 self.image = self.images[2]
 
             if event.key == pygame.K_LEFT or event.key == pygame.K_a:
                 if map[self.y][self.x - 1] not in '01234567b':
                     self.x -= 1
-                self.image = self.images[1]
+                    if move_or_not:
+                        self.rect.x -= 75
+                if not move_or_not:
+                    self.image = self.images[1]
 
             if event.key == pygame.K_RIGHT or event.key == pygame.K_d:
                 if map[self.y][self.x + 1] not in '01234567b':
                     self.x += 1
-                self.image = self.images[3]
+                    if move_or_not:
+                        self.rect.x += 75
+                if not move_or_not:
+                    self.image = self.images[3]
 
     def shot(self, number):
         """Функция выстрела"""
+        patron = None
         # проверка на ту в какую сторону повернут игрок и создание объекта пули
         if number == 0:
             patron = Patron(self.rect.x + 22, self.rect.y + 5, 0, -7)
@@ -77,6 +89,12 @@ class Player(pygame.sprite.Sprite):
             patron = Patron(self.rect.x + 22, self.rect.y + 20, 0, 7)
         if number == 3:
             patron = Patron(self.rect.x + 20, self.rect.y + 22, 7, 0)
+
+        pygame.mixer.init()
+        pygame.mixer.music.load('data/shot.mp3')
+        pygame.mixer.music.play(1)
+        pygame.mixer.music.set_volume(0.5)
+
         return patron
 
 
@@ -117,15 +135,17 @@ class Patron(pygame.sprite.Sprite):
         self.rect.y = y
         self.speed_x = speed_x
         self.speed_y = speed_y
+        self.meet_wall = False
 
     def update(self, *args, **kwargs):
         """Обновление патрона"""
         # если касаемся стены, то остаемся на месте
-        if pygame.sprite.spritecollideany(self, walls_group):
+        if pygame.sprite.spritecollideany(self, walls_group) and not self.meet_wall:
             self.speed_y = 0
             self.speed_x = 0
         # если касаемся бочки, то исчезаем
-        if pygame.sprite.spritecollideany(self, barrels_group) or pygame.sprite.spritecollideany(self, enemies_group):
+        if pygame.sprite.spritecollideany(self, barrels_group) or pygame.sprite.spritecollideany(self,
+                                                                                                 enemies_group):
             self.kill()
         # изменение положения объекта
         self.rect.x += self.speed_x
@@ -195,9 +215,13 @@ class Enemy(pygame.sprite.Sprite):
 class Particles(pygame.sprite.Sprite):
     """Класс частиц(сделан для анимации смерти игрока)"""
 
-    def __init__(self, x, y, dx, dy):
+    def __init__(self, x, y, dx, dy, color):
         super().__init__(particles_group)
-        self.image = load_image('red_hands.png')
+        if color == 1:
+            self.image = load_image('red_hands.png')
+        if color == 0:
+            self.image = load_image('yellow_hand.png', 1)
+
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = x + 30, y + 30
         self.dx, self.dy = dx, dy
@@ -298,7 +322,7 @@ class Sword(pygame.sprite.Sprite):
             self.rect.y += self.dy
 
 
-class Pacman(pygame.sprite.Sprite):
+class FollowingPacman(pygame.sprite.Sprite):
     def __init__(self, number):
         super().__init__(pacman_group, enemies_group, all_sprites_group)
         self.images = [load_image('pacman_openned.png'), load_image('pacman_closed.png')]
@@ -395,6 +419,83 @@ class WinPlace(pygame.sprite.Sprite):
         self.rect.y = y + 10
 
 
+class BossPacman(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__(enemies_group)
+
+        self.images = [load_image('pacman_boss_open.png'), load_image('pacman_boss_close.png')]
+        self.image = self.images[1]
+
+        self.rect = self.image.get_rect()
+
+        self.rect.x = x * CELL_SIZE - 90
+        self.rect.y = y * CELL_SIZE + 50
+
+        self.dx = 2
+
+        self.current = 4
+        self.possible_coordinates = [self.rect.x - 3 * CELL_SIZE, self.rect.x - 2 * CELL_SIZE, self.rect.x - CELL_SIZE,
+                                     self.rect.x,
+                                     self.rect.x + CELL_SIZE, self.rect.x + 2 * CELL_SIZE, self.rect.x + 3 * CELL_SIZE]
+
+        self.wait = False
+        self.wait_counter = 0
+
+        self.hp = 20
+
+    def update(self, *args, **kwargs):
+
+        if pygame.sprite.spritecollideany(self, patrons_group):
+            self.hp -= 1
+
+        if self.wait:
+            if self.wait_counter == 60:
+                self.wait_counter = 0
+                self.wait = False
+            self.wait_counter += 1
+
+        if not self.wait:
+            if abs(self.rect.x - self.possible_coordinates[self.current]) <= 1:
+                self.image = self.images[0]
+                new = self.current
+                while new == self.current:
+                    self.current = randint(0, 6)
+
+                if self.rect.x > self.possible_coordinates[self.current]:
+                    self.dx = -2
+                if self.rect.x < self.possible_coordinates[self.current]:
+                    self.dx = 2
+
+                self.wait = True
+
+                self.shot(self.rect.x, self.rect.y)
+                pygame.mixer.music.load('data/pacman_shot.mp3')
+                pygame.mixer.music.set_volume(0.5)
+                pygame.mixer.music.play(1)
+
+        if not self.wait and self.rect.x != self.possible_coordinates[self.current]:
+            self.image = self.images[1]
+            self.rect.x += self.dx
+
+    def shot(self, x, y):
+        PacPatron(x + 50, y + 100)
+
+
+class PacPatron(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__(enemies_group)
+        self.image = load_image('pac_patron.png', -1)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.dy = 5
+
+    def update(self, *args, **kwargs):
+        if pygame.sprite.spritecollideany(self, walls_group):
+            self.dy = 0
+        self.rect.y += self.dy
+
+
 class Camera:
     """Класс камеры"""
 
@@ -408,15 +509,17 @@ class Camera:
 
     def update(self, object):
         """Смещение всех объектов"""
+
         if type(object) == Sword:
             object.end_x += self.x_shift
             object.start_x += self.x_shift
             object.end_y += self.y_shift
             object.start_y += self.y_shift
 
-        if type(object) == Pacman:
+        if type(object) == FollowingPacman:
             object.rect.y += self.y_shift * object.number
             object.rect.x += -self.x_shift
+
 
         object.rect.x += self.x_shift
         object.rect.y += self.y_shift
@@ -432,8 +535,13 @@ class Camera:
 def generate_level(level):
     """Создание уровня"""
     new_player = None
+    pacman = None
     for y in range(len(level)):
         for x in range(len(level[y])):
+
+            if level[y][x] == 'B':
+                pacman = BossPacman(x, y)
+
             # создание бочки
             if level[y][x] == 'b':
                 EmptyGround(x * CELL_SIZE, y * CELL_SIZE)
@@ -479,10 +587,10 @@ def generate_level(level):
             elif level[y][x] == '@':
                 EmptyGround(x * CELL_SIZE, y * CELL_SIZE)
                 new_player = Player(x * CELL_SIZE, y * CELL_SIZE)
-    return new_player
+    return new_player, pacman
 
 
-def die_of_hero(x, y):
+def die_of_hero(x, y, color):
     """Функция, которая создает группу частиц для анимации смерти героя"""
     for dx, dy in ((6, 0), (5, 5), (0, 6), (-6, 0), (-5, -5), (0, -6), (5, -5), (-5, 5)):
-        Particles(x, y, dx, dy)
+        Particles(x, y, dx, dy, color)
